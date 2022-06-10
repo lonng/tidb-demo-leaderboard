@@ -8,3 +8,6 @@ Demonstrate how to use TiCDC continuously synchronize TiDB change to Redis
 3. Install Redis reference [Redis Get Start](https://redis.io/docs/getting-started/) and run redis `redis-server`
 4. Install Kafka reference [Kafka Quickstart](https://kafka.apache.org/quickstart#quickstart_startserver)
 5. Create changefeed `tiup cdc cli changefeed create --sink-uri="kafka://127.0.0.1:9092/trending?kafka-version=2.13.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=canal-json"`
+6. Run application
+   1. go run ./cmd/trending-service/main.go
+   2. go run ./cmd/message-consumer/main.go
