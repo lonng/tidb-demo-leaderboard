@@ -3,6 +3,7 @@ package consumer
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-redis/redis"
@@ -12,6 +13,7 @@ import (
 
 type Service struct {
 	opt *config.ConsumerOptions
+	rdb *redis.Client
 }
 
 func NewService(opt *config.ConsumerOptions) *Service {
@@ -30,6 +32,7 @@ func (s *Service) Serve() error {
 	if err := result.Err(); err != nil {
 		return errors.Annotate(err, "ping redis failed")
 	}
+	s.rdb = rdb
 	defer rdb.Close()
 
 	fmt.Println("Connected to Redis successfully")
@@ -65,9 +68,7 @@ func (s *Service) Serve() error {
 
 type Message struct {
 	Data []struct {
-		ID        string `json:"id"`
-		Text      string `json:"text"`
-		CreatedAt string `json:"created_at"`
+		Text string `json:"text"`
 	} `json:"data"`
 }
 
@@ -82,7 +83,24 @@ func (s *Service) updateCache(val []byte) {
 		return
 	}
 
+	var topics []string
 	for _, item := range m.Data {
-		fmt.Printf("%+v\n", item)
+		if !strings.Contains(item.Text, " #") {
+			continue
+		}
+		parts := strings.Split(item.Text, " ")
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if !strings.HasPrefix(p, "#") {
+				continue
+			}
+			topics = append(topics, p)
+		}
+	}
+	for _, t := range topics {
+		cmd := s.rdb.ZIncrBy(config.TopicName, 1, t)
+		if err := cmd.Err(); err != nil {
+			fmt.Println("ZIncrBy failed", t, err)
+		}
 	}
 }

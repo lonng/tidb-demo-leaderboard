@@ -56,7 +56,8 @@ func (s *Service) Serve() error {
 		CREATE TABLE IF NOT EXISTS messages(
 		    id BIGINT NOT NULL AUTO_RANDOM PRIMARY KEY,
 		    text VARCHAR(144),
-		    created_at DATETIME DEFAULT NOW()
+		    created_at DATETIME DEFAULT NOW(),
+		    KEY idx_created_at(created_at)
 		);
 `)
 
@@ -105,9 +106,9 @@ func (s *Service) PostMessage(req *MessageRequest) (*MessageResponse, error) {
 
 type (
 	RecentlyMessageItem struct {
-		ID        uint64    `json:"id"`
-		Text      string    `json:"text"`
-		CreatedAt time.Time `json:"created_at"`
+		ID        uint64 `json:"id"`
+		Text      string `json:"text"`
+		CreatedAt string `json:"created_at"`
 	}
 	RecentlyMessageListResponse struct {
 		Messages []RecentlyMessageItem `json:"messages"`
@@ -115,13 +116,26 @@ type (
 )
 
 func (s *Service) RecentlyMessages() (*RecentlyMessageListResponse, error) {
-	return nil, errors.New("not implemented")
+	rows, err := s.db.Query("SELECT id, text, created_at FROM messages ORDER BY created_at DESC LIMIT 100")
+	if err != nil {
+		return nil, err
+	}
+	var results []RecentlyMessageItem
+	for rows.Next() {
+		item := RecentlyMessageItem{}
+		err := rows.Scan(&item.ID, &item.Text, &item.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, item)
+	}
+	return &RecentlyMessageListResponse{Messages: results}, nil
 }
 
 type (
 	TopicItem struct {
 		Topic string `json:"topic"`
-		Hot   int64  `json:"hot"`
+		Hot   int    `json:"hot"`
 	}
 	TopicListResponse struct {
 		Topics []TopicItem `json:"topics"`
@@ -129,5 +143,22 @@ type (
 )
 
 func (s *Service) TopTopics() (*TopicListResponse, error) {
-	return nil, errors.New("not implemented")
+	cmd := s.rdb.ZRevRangeByScoreWithScores(config.TopicName, redis.ZRangeBy{
+		Min:    "-inf",
+		Max:    "inf",
+		Offset: 0,
+		Count:  10,
+	})
+	res, err := cmd.Result()
+	if err != nil {
+		return nil, err
+	}
+	var results []TopicItem
+	for _, r := range res {
+		results = append(results, TopicItem{
+			Topic: r.Member.(string),
+			Hot:   int(r.Score),
+		})
+	}
+	return &TopicListResponse{Topics: results}, nil
 }
