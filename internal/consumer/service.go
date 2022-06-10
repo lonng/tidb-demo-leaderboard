@@ -1,11 +1,13 @@
 package consumer
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-redis/redis"
 	"github.com/lonng/tidb-demo-trending/config"
+	"github.com/pingcap/errors"
 )
 
 type Service struct {
@@ -26,7 +28,7 @@ func (s *Service) Serve() error {
 	})
 	result := rdb.Ping()
 	if err := result.Err(); err != nil {
-		return err
+		return errors.Annotate(err, "ping redis failed")
 	}
 	defer rdb.Close()
 
@@ -40,6 +42,9 @@ func (s *Service) Serve() error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("Connected to Kafka successfully")
+
 	err = c.SubscribeTopics([]string{s.opt.Kafka.Topic}, nil)
 	if err != nil {
 		return err
@@ -50,9 +55,34 @@ func (s *Service) Serve() error {
 		msg, err := c.ReadMessage(-1)
 		if err == nil {
 			fmt.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
+			s.updateCache(msg.Value)
 		} else {
 			// The client will automatically try to recover from all errors.
 			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
 		}
+	}
+}
+
+type Message struct {
+	Data []struct {
+		ID        string `json:"id"`
+		Text      string `json:"text"`
+		CreatedAt string `json:"created_at"`
+	} `json:"data"`
+}
+
+func (s *Service) updateCache(val []byte) {
+	m := Message{}
+	if err := json.Unmarshal(val, &m); err != nil {
+		fmt.Println("Unmarshal message failed", err)
+		return
+	}
+
+	if len(m.Data) == 0 {
+		return
+	}
+
+	for _, item := range m.Data {
+		fmt.Printf("%+v\n", item)
 	}
 }

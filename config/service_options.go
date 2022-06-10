@@ -29,7 +29,7 @@ func (opt *ServiceOptions) AddFlags(flags *pflag.FlagSet) {
 
 	// Redis server configurations
 	flags.StringVar(&opt.Redis.Host, "redis.host", "127.0.0.1", "Redis server host name")
-	flags.IntVar(&opt.Redis.Port, "redis.port", 2379, "Redis server port")
+	flags.IntVar(&opt.Redis.Port, "redis.port", 6379, "Redis server port")
 	flags.StringVar(&opt.Redis.Pass, "redis.pass", "", "Redis server password")
 
 	// DB server configurations
