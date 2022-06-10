@@ -1,7 +1,9 @@
 package trending
 
 import (
+	"bytes"
 	"database/sql"
+	_ "embed"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,6 +15,9 @@ import (
 	"github.com/lonng/tidb-demo-trending/config"
 	"github.com/pingcap/fn"
 )
+
+//go:embed app.html
+var appHtml []byte
 
 type Service struct {
 	opt *config.ServiceOptions
@@ -63,9 +68,14 @@ func (s *Service) Serve() error {
 
 	fmt.Println("Initialize tables successfully")
 
+	startTime := time.Now()
+
 	http.Handle("/api/v1/message", fn.Wrap(s.PostMessage))
 	http.Handle("/api/v1/messages", fn.Wrap(s.RecentlyMessages))
 	http.Handle("/api/v1/top-topics", fn.Wrap(s.TopTopics))
+	http.Handle("/", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		http.ServeContent(writer, request, "app.html", startTime, bytes.NewReader(appHtml))
+	}))
 
 	return http.ListenAndServe(fmt.Sprintf(":%d", s.opt.Port), nil)
 }
