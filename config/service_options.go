@@ -37,7 +37,7 @@ func (opt *ServiceOptions) AddFlags(flags *pflag.FlagSet) {
 	flags.IntVar(&opt.DB.Port, "db.port", 4000, "Database server port")
 	flags.StringVar(&opt.DB.User, "db.user", "root", "Database server user name")
 	flags.StringVar(&opt.DB.Pass, "db.pass", "", "Database server password")
-	flags.StringVar(&opt.DB.Name, "db.name", "trending", "Database server database name")
+	flags.StringVar(&opt.DB.Name, "db.name", "leaderboard", "Database server database name")
 	flags.StringVar(&opt.DB.Options, "db.options", "charset=utf8mb4", "Database server connection options")
 }
 

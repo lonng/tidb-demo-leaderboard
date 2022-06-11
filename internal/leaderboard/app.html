@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Open Message Trending Demo</title>
+    <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
+    <style>
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+        }
+
+        .container-title {
+            text-align: center;
+            margin: 50px 0;
+        }
+
+        .container-left {
+            width: 65%;
+        }
+
+        .container-round {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .round-text {
+            width: 48%;
+            font-size: 100px;
+            text-align: center;
+            background: #777;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .round-text:hover {
+            background: #999;
+        }
+
+        .noselect {
+            -webkit-touch-callout: none; /* iOS Safari */
+            -webkit-user-select: none; /* Safari */
+            -khtml-user-select: none; /* Konqueror HTML */
+            -moz-user-select: none; /* Old versions of Firefox */
+            -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+        }
+
+        .container-right {
+            width: 30%;
+        }
+
+        .container-right h2 {
+            font-size: 35px;
+        }
+
+        .container-right ul {
+            list-style: none;
+            margin-left: 0;
+            padding-left: 0;
+        }
+
+        .container-right ul li {
+            display: flex;
+            flex-direction: row;
+            padding: 4px 0;
+        }
+
+        .leaderboard-score {
+            min-width: 40px;
+            text-align: center;
+            background: #444;
+            border-radius: 20px;
+            margin-right: 15px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="entry-page" v-if="entryPage">
+        <input type="text" v-model="name" v-on:keyup.enter="onJoin" placeholder="Type your name to join game">
+    </div>
+    <h1 class="container-title">TiDB Demo Leaderboard</h1>
+    <div class="container">
+        <div class="container-left">
+            <h2>Hi {{ name}}</h2>
+            <div class="container-round">
+                <a class="round-text noselect" @click="onChoose(true)">{{ left_symbol }}</a>
+                <a class="round-text noselect" @click="onChoose(false)">{{ right_symbol }}</a>
+            </div>
+            <h2>Your score: {{ score}}</h2>
+        </div>
+        <div class="container-right">
+            <h2>Leaderboard</h2>
+            <ul>
+                <li v-for="item in rank">
+                    <div class="leaderboard-score">{{ item.score }}</div>
+                    <div>{{ item.name }}</div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+</body>
+<script src="https://unpkg.com/vue@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    const {createApp} = Vue
+    createApp({
+        data() {
+            return {
+                entryPage: true,
+                left_symbol: "",
+                right_symbol: "",
+                rank: [],
+                name: "",
+                score: 0,
+            }
+        },
+        methods: {
+            onJoin: function (){
+                let self = this;
+                if (this.name.trim() === "") {
+                    return
+                }
+                axios.post('/api/v1/join', {
+                    name: self.name,
+                })
+                    .then(function (response) {
+                        console.log(response);
+                        self.score = response.data.score
+                        self.entryPage = false
+                    })
+                    .catch(function (error) {
+                        console.log("Join failed", error);
+                    });
+            },
+            onChoose: function (chooseLeft) {
+                let self = this;
+                axios.post('/api/v1/round', {
+                    name: self.name,
+                    left_symbol: self.left_symbol,
+                    right_symbol: self.right_symbol,
+                    choose_left: chooseLeft,
+                })
+                    .then(function (response) {
+                        console.log(response);
+                        self.score += response.data.changed_score
+                        self.left_symbol = response.data.next_round.left_symbol
+                        self.right_symbol = response.data.next_round.right_symbol
+                    })
+                    .catch(function (error) {
+                        console.log("Submit round failed", error);
+                    });
+            },
+            fetchTopics: function () {
+                let self = this;
+                axios.get('/api/v1/leaderboard').then(res => {
+                    self.rank = res.data.rank;
+                }).catch(err => {
+                    console.log("Fetch top topic failed", err)
+                })
+            },
+            fetchRound: function () {
+                let self = this;
+                axios.get('/api/v1/round').then(res => {
+                    self.left_symbol = res.data.left_symbol;
+                    self.right_symbol = res.data.right_symbol;
+                }).catch(err => {
+                    console.log("Fetch round failed", err)
+                })
+            }
+        },
+        mounted: function () {
+            this.fetchRound()
+            this.fetchTopics()
+            window.setInterval(this.fetchTopics, 200);
+        }
+    }).mount('#app')
+</script>
+</html>

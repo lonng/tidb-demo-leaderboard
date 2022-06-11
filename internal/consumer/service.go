@@ -3,11 +3,11 @@ package consumer
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
+	"strconv"
 
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-redis/redis"
-	"github.com/lonng/tidb-demo-trending/config"
+	"github.com/lonng/tidb-demo-leaderboard/config"
 	"github.com/pingcap/errors"
 )
 
@@ -68,7 +68,8 @@ func (s *Service) Serve() error {
 
 type Message struct {
 	Data []struct {
-		Text string `json:"text"`
+		Name  string `json:"name"`
+		Score string `json:"score"`
 	} `json:"data"`
 }
 
@@ -83,24 +84,14 @@ func (s *Service) updateCache(val []byte) {
 		return
 	}
 
-	var topics []string
 	for _, item := range m.Data {
-		if !strings.Contains(item.Text, " #") {
+		score, err := strconv.ParseInt(item.Score, 10, 64)
+		if err != nil {
 			continue
 		}
-		parts := strings.Split(item.Text, " ")
-		for _, p := range parts {
-			p = strings.TrimSpace(p)
-			if !strings.HasPrefix(p, "#") {
-				continue
-			}
-			topics = append(topics, p)
-		}
-	}
-	for _, t := range topics {
-		cmd := s.rdb.ZIncrBy(config.TopicName, 1, t)
+		cmd := s.rdb.ZAdd(config.Leaderboard, redis.Z{Score: float64(score), Member: item.Name})
 		if err := cmd.Err(); err != nil {
-			fmt.Println("ZIncrBy failed", t, err)
+			fmt.Println("ZIncrBy failed", item.Name, item.Score, err)
 		}
 	}
 }

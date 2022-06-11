@@ -1,18 +1,18 @@
 package main
 
 import (
-	"github.com/lonng/tidb-demo-trending/config"
-	"github.com/lonng/tidb-demo-trending/internal/consumer"
+	"github.com/lonng/tidb-demo-leaderboard/config"
+	"github.com/lonng/tidb-demo-leaderboard/internal/leaderboard"
 	"github.com/spf13/cobra"
 )
 
 func main() {
-	opt := &config.ConsumerOptions{}
+	opt := &config.ServiceOptions{}
 	cmd := cobra.Command{
-		Use:          "message-consumer",
+		Use:          "leaderboard-service",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			svr := consumer.NewService(opt)
+			svr := leaderboard.NewService(opt)
 			return svr.Serve()
 		},
 	}

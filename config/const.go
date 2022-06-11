@@ -1,5 +1,5 @@
 package config
 
 const (
-	TopicName = "trending"
+	Leaderboard = "leaderboard"
 )
