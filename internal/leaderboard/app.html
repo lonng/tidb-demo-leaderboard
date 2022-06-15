@@ -5,7 +5,7 @@
     <title>Open Message Trending Demo</title>
     <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
     <style>
-        .entry-page{
+        .entry-page {
             position: absolute;
             top: 0;
             bottom: 0;
@@ -18,6 +18,7 @@
             justify-content: center;
             align-items: center;
         }
+
         .container {
             display: flex;
             flex-direction: row;
@@ -57,8 +58,9 @@
             -khtml-user-select: none; /* Konqueror HTML */
             -moz-user-select: none; /* Old versions of Firefox */
             -ms-user-select: none; /* Internet Explorer/Edge */
-            user-select: none; /* Non-prefixed version, currently
-                                  supported by Chrome, Edge, Opera and Firefox */
+            user-select: none;
+            /* Non-prefixed version, currently
+                                             supported by Chrome, Edge, Opera and Firefox */
         }
 
         .container-right {
@@ -108,6 +110,10 @@
                 <a class="round-text noselect" @click="onChoose(false)">{{ right_symbol }}</a>
             </div>
             <h2>Your score: {{ score}}</h2>
+            <div class="leaderboard-rule">
+                <h4>Rules</h4>
+                <p>Every picture indicate a number, You will gain 1 point if you choose the larger number</p>
+            </div>
         </div>
         <div class="container-right">
             <h2>Leaderboard</h2>
@@ -137,7 +143,7 @@
             }
         },
         methods: {
-            onJoin: function (){
+            onJoin: function () {
                 let self = this;
                 if (this.name.trim() === "") {
                     return
@@ -149,6 +155,7 @@
                         console.log(response);
                         self.score = response.data.score
                         self.entryPage = false
+                        localStorage.setItem("leaderboard-name", self.name)
                     })
                     .catch(function (error) {
                         console.log("Join failed", error);
@@ -191,6 +198,12 @@
             }
         },
         mounted: function () {
+            let name = localStorage.getItem("leaderboard-name")
+            if (!!name) {
+                this.name = name
+                this.entryPage = false
+                this.onJoin()
+            }
             this.fetchRound()
             this.fetchTopics()
             window.setInterval(this.fetchTopics, 200);

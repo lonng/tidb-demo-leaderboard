@@ -1,14 +1,16 @@
 package consumer
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 
-	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/go-redis/redis"
 	"github.com/lonng/tidb-demo-leaderboard/config"
 	"github.com/pingcap/errors"
+	"github.com/segmentio/kafka-go"
 )
 
 type Service struct {
@@ -37,32 +39,22 @@ func (s *Service) Serve() error {
 
 	fmt.Println("Connected to Redis successfully")
 
-	c, err := kafka.NewConsumer(&kafka.ConfigMap{
-		"bootstrap.servers": s.opt.Kafka.Server,
-		"group.id":          "message-consumer",
-		"auto.offset.reset": "earliest",
-	})
+	conn, err := kafka.DialLeader(context.Background(), "tcp", s.opt.Kafka.Server, s.opt.Kafka.Topic, 0)
 	if err != nil {
-		return err
+		log.Fatal("failed to dial leader:", err)
 	}
+	defer conn.Close()
 
 	fmt.Println("Connected to Kafka successfully")
 
-	err = c.SubscribeTopics([]string{s.opt.Kafka.Topic}, nil)
-	if err != nil {
-		return err
-	}
-	defer c.Close()
-
 	for {
-		msg, err := c.ReadMessage(-1)
-		if err == nil {
-			fmt.Printf("Message on %s: %s\n", msg.TopicPartition, string(msg.Value))
-			s.updateCache(msg.Value)
-		} else {
-			// The client will automatically try to recover from all errors.
-			fmt.Printf("Consumer error: %v (%v)\n", err, msg)
+		message, err := conn.ReadMessage(10e3)
+		if err != nil {
+			fmt.Printf("Consumer error: %v\n", err)
+			continue
 		}
+		fmt.Println("Message on", string(message.Value))
+		s.updateCache(message.Value)
 	}
 }
 
