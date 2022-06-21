@@ -1,6 +1,10 @@
 # tidb-demo-leaderboard
 Demonstrate how to use TiCDC continuously synchronize TiDB change to Redis
 
+## Architecture
+
+![Game Leaderboard Architecture](/resources/architecture.png)
+
 ## Get Start
 
 1. Install TiUP `curl --proto '=https' --tlsv1.2 -sSf https://tiup-mirrors.pingcap.com/install.sh | sh`
