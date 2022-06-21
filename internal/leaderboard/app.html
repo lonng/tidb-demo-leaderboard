@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Open Message Trending Demo</title>
+    <title>TiDB Demo - Leaderboard</title>
     <link rel="stylesheet" href="https://cdn.simplecss.org/simple.min.css">
     <style>
         .entry-page {
@@ -53,11 +54,16 @@
         }
 
         .noselect {
-            -webkit-touch-callout: none; /* iOS Safari */
-            -webkit-user-select: none; /* Safari */
-            -khtml-user-select: none; /* Konqueror HTML */
-            -moz-user-select: none; /* Old versions of Firefox */
-            -ms-user-select: none; /* Internet Explorer/Edge */
+            -webkit-touch-callout: none;
+            /* iOS Safari */
+            -webkit-user-select: none;
+            /* Safari */
+            -khtml-user-select: none;
+            /* Konqueror HTML */
+            -moz-user-select: none;
+            /* Old versions of Firefox */
+            -ms-user-select: none;
+            /* Internet Explorer/Edge */
             user-select: none;
             /* Non-prefixed version, currently
                                              supported by Chrome, Edge, Opera and Firefox */
@@ -96,41 +102,44 @@
         }
     </style>
 </head>
+
 <body>
-<div id="app">
-    <div class="entry-page" v-if="entryPage">
-        <input type="text" v-model="name" v-on:keyup.enter="onJoin" placeholder="Type your name to join game">
-    </div>
-    <h1 class="container-title">TiDB Demo Leaderboard</h1>
-    <div class="container">
-        <div class="container-left">
-            <h2>Hi {{ name}}</h2>
-            <div class="container-round">
-                <a class="round-text noselect" @click="onChoose(true)">{{ left_symbol }}</a>
-                <a class="round-text noselect" @click="onChoose(false)">{{ right_symbol }}</a>
+    <div id="app">
+        <div class="entry-page" v-if="entryPage">
+            <input type="text" v-model="name" v-on:keyup.enter="onJoin" placeholder="Type your name to join game">
+        </div>
+        <h1 class="container-title">TiDB Demo Leaderboard</h1>
+        <div class="container">
+            <div class="container-left">
+                <h2>Hi {{ name}}</h2>
+                <div class="container-round">
+                    <a class="round-text noselect" @click="onChoose(true)">{{ left_symbol }}</a>
+                    <a class="round-text noselect" @click="onChoose(false)">{{ right_symbol }}</a>
+                </div>
+                <h2>Your score: {{ score}}</h2>
+                <div class="leaderboard-rule">
+                    <h4>Rules</h4>
+                    <p>Every picture indicate a number, You will gain 1 point if you choose the larger number</p>
+                </div>
             </div>
-            <h2>Your score: {{ score}}</h2>
-            <div class="leaderboard-rule">
-                <h4>Rules</h4>
-                <p>Every picture indicate a number, You will gain 1 point if you choose the larger number</p>
+            <div class="container-right">
+                <h2>Leaderboard</h2>
+                <ul>
+                    <li v-for="item in rank">
+                        <div class="leaderboard-score">{{ item.score }}</div>
+                        <div>{{ item.name }}</div>
+                    </li>
+                </ul>
+                <img src="https://chart.googleapis.com/chart?chl=http%3A%2F%2Fsv.0xffff.me%3A8081%2F&chs=200x200&cht=qr&chld=H%7C0"
+                    alt="">
             </div>
         </div>
-        <div class="container-right">
-            <h2>Leaderboard</h2>
-            <ul>
-                <li v-for="item in rank">
-                    <div class="leaderboard-score">{{ item.score }}</div>
-                    <div>{{ item.name }}</div>
-                </li>
-            </ul>
-        </div>
     </div>
-</div>
 </body>
 <script src="https://unpkg.com/vue@3"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-    const {createApp} = Vue
+    const { createApp } = Vue
     createApp({
         data() {
             return {
@@ -210,4 +219,5 @@
         }
     }).mount('#app')
 </script>
+
 </html>
