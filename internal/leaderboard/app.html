@@ -180,7 +180,7 @@
                 })
                     .then(function (response) {
                         console.log(response);
-                        self.score += response.data.changed_score
+                        self.score = response.data.score
                         self.left_symbol = response.data.next_round.left_symbol
                         self.right_symbol = response.data.next_round.right_symbol
                     })

@@ -29,8 +29,14 @@ var symbols = []string{
 var symbolScores = map[string]int{} // symbol => score
 
 func init() {
-	for _, s := range symbols {
-		symbolScores[s] = rand.Intn(100)
+	rand.Seed(time.Now().UnixNano())
+	for i := range symbols {
+		j := rand.Intn(i + 1)
+		symbols[i], symbols[j] = symbols[j], symbols[i]
+	}
+
+	for i := range symbols {
+		symbolScores[symbols[i]] = i
 	}
 }
 
@@ -148,16 +154,10 @@ type (
 
 func (s *Service) Join(req *JoinRequest) (*JoinResponse, error) {
 	name := strings.TrimSpace(req.Name)
-	rows, err := s.db.Query("SELECT score FROM user_score WHERE name = ?", name)
-	if err != nil || !rows.Next() {
-		return &JoinResponse{Name: name}, nil
-	}
-	defer rows.Close()
-
 	var score int64
-	err = rows.Scan(&score)
+	err := s.db.QueryRow("SELECT score FROM user_score WHERE name = ?", name).Scan(&score)
 	if err != nil {
-		return nil, err
+		return &JoinResponse{Name: name}, nil
 	}
 	return &JoinResponse{
 		Name:  name,
@@ -176,6 +176,7 @@ type (
 	RoundResultResponse struct {
 		IsWin        bool           `json:"is_win"`
 		ChangedScore int64          `json:"changed_score"`
+		Score        int64          `json:"score"`
 		NextRound    *RoundResponse `json:"next_round"`
 	}
 )
@@ -211,9 +212,13 @@ func (s *Service) RoundResult(req *RoundResultRequest) (*RoundResultResponse, er
 		return nil, tx.Rollback()
 	}
 
+	var score int64
+	_ = tx.QueryRow("SELECT score FROM user_score WHERE name = ?", name).Scan(&score)
+
 	return &RoundResultResponse{
 		IsWin:        isWin,
 		ChangedScore: changedScore,
+		Score:        score,
 		NextRound:    randomSymbol(),
 	}, tx.Commit()
 }
