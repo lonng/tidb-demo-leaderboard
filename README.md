@@ -18,3 +18,10 @@ Demonstrate how to use TiCDC continuously synchronize TiDB change to Redis
    1. go run ./cmd/leaderboard-service/main.go
    2. go run ./cmd/score-consumer/main.go
 9. Open your browser http://127.0.0.1:8080
+
+## About the game
+
+This is just a dummy game. The goal is to show TiCDC's capabilities.
+
+### How to play?
+In the game, there are 5 pictures and each picture has a unique number on its back. For each round, you will choose (by clicking the picture) the picture with a larger numer. If you choose the right one, you gain one point, otherwise, you lose one point. You can leverage your memory or try you luck. Enjoy!
