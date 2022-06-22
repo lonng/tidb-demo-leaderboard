@@ -1,9 +1,9 @@
 # tidb-demo-leaderboard
-Demonstrate how to use TiCDC continuously synchronize TiDB change to Redis
+Demonstrate how to use TiCDC replicate data from TiDB to Kafka
 
 ## Architecture
 
-![Game Leaderboard Architecture](/resources/architecture.png)
+![Game Leaderboard Architecture](/resources/architecture.svg)
 
 ## Get Start
 
