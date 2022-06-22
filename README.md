@@ -3,7 +3,7 @@ Demonstrate how to use TiCDC continuously synchronize TiDB change to Redis
 
 ## Architecture
 
-![Game Leaderboard Architecture](/resources/architecture.png)
+![Game Leaderboard Architecture](/resources/architecture.svg)
 
 ## Get Start
 
